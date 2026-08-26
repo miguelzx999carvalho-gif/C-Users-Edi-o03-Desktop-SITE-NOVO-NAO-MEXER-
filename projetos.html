@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projetos | SENAC</title>
+    <link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+
+    <header>
+        <nav class="menu">
+            <a href="index.html">🏠 Início</a>
+            <a href="projetos.html" class="link-ativo">📂 Projetos</a>
+            <a href="avisos.html">📢 Avisos</a>
+            <a href="sobre.html">👤 Sobre</a>
+            <a href="#" onclick="abrirLogin(); return false;" class="botao-adm">🔐 Admin</a>
+        </nav>
+    </header>
+
+    <main>
+        <h1>📂 Projetos e Trabalhos</h1>
+
+        <div class="painel-filtros">
+            <input type="text" id="busca" placeholder="🔍 Buscar projeto..." oninput="aplicarFiltros()">
+            <select id="filtro-secao" onchange="aplicarFiltros()">
+                <option value="">Todas as Seções</option>
+                <option value="🎨 Canva">🎨 Canva</option>
+                <option value="🎬 Vídeos">🎬 Vídeos</option>
+                <option value="📄 Trabalhos Escritos">📄 Trabalhos Escritos</option>
+                <option value="💻 Projetos de Programação">💻 Programação</option>
+                <option value="📊 Apresentações">📊 Apresentações</option>
+                <option value="📸 Fotos e Imagens">📸 Fotos e Imagens</option>
+            </select>
+            <select id="filtro-ordem" onchange="aplicarFiltros()">
+                <option value="recentes">Mais Recentes</option>
+                <option value="antigos">Mais Antigos</option>
+                <option value="curtidas">Mais Curtidas ❤️</option>
+            </select>
+        </div>
+
+        <div id="lista-projetos" class="grade-projetos"></div>
+    </main>
+
+    <div id="loginTela" class="tela-login">
+        <div class="caixa-login">
+            <button class="fechar" onclick="fecharLogin()">&times;</button>
+            <h3>🔐 Acesso Administrativo</h3>
+            <input type="email" id="email" placeholder="📧 Seu e-mail">
+            <input type="password" id="senha" placeholder="🔑 Senha">
+            <button onclick="entrar()" class="botao-entrar">Entrar</button>
+        </div>
+    </div>
+
+    <script>
+        const EMAIL_DONO = "miguelzx999carvalho@gmail.com";
+        const SENHA_DONO = "1029384756SENAC";
+
+        function abrirLogin() { document.getElementById('loginTela').style.display = 'flex'; }
+        function fecharLogin() { document.getElementById('loginTela').style.display = 'none'; }
+        function entrar() {
+            const e = document.getElementById('email').value;
+            const s = document.getElementById('senha').value;
+            if (e === EMAIL_DONO && s === SENHA_DONO) {
+                localStorage.setItem('logado', 'SIM');
+                alert('✅ Bem-vindo!');
+                fecharLogin();
+                window.location.href = 'painel.html';
+            } else { alert('❌ Dados incorretos!'); }
+        }
+
+        function carregarProjetos() {
+            let projetos = JSON.parse(localStorage.getItem('projetos') || '[]');
+            const comentarios = JSON.parse(localStorage.getItem('comentarios') || '[]');
+            const curtidas = JSON.parse(localStorage.getItem('curtidas') || '{}');
+
+            const busca = document.getElementById('busca').value.toLowerCase();
+            const secao = document.getElementById('filtro-secao').value;
+            const ordem = document.getElementById('filtro-ordem').value;
+
+            projetos = projetos.filter(p => {
+                const temBusca = !busca || p.titulo.toLowerCase().includes(busca) || (p.descricao||'').toLowerCase().includes(busca);
+                const temSecao = !secao || p.secao === secao;
+                return temBusca && temSecao;
+            });
+
+            if (ordem === 'recentes') projetos.sort((a,b)=>b.dataComp- a.dataComp);
+            if (ordem === 'antigos') projetos.sort((a,b)=>a.dataComp - b.dataComp);
+            if (ordem === 'curtidas') projetos.sort((a,b)=>(curtidas[b.id]||0)-(curtidas[a.id]||0));
+
+            const lista = document.getElementById('lista-projetos');
+            if (projetos.length === 0) {
+                lista.innerHTML = '<p class="vazio">Nenhum projeto encontrado.</p>;
+                return;
+            }
+
+            lista.innerHTML = projetos.map(p => {
+                const qtdComent = comentarios.filter(c=>c.alvoId===p.id && c.tipo==='projeto').length;
+                const qtdCurtida = curtidas[p.id] || 0;
+                return `
+                <div class="card-projeto" id="proj-${p.id}">
+                    <span class="etiqueta-secao">${p.secao}</span>
+                    <h3>${p.titulo}</h3>
+                    <p class="desc">${p.descricao || 'Sem descrição'}</p>
+                    <a href="${p.link}" target="_blank" class="botao-link">🔗 Abrir Trabalho</a>
+                    <div class="acoes">
+                        <button class="btn-curtir" onclick="curtir('${p.id}')">❤️ <span id="c-${p.id}">${qtdCurtida}</span></button>
+                        <span class="cont-coment">💬 ${qtdComent} comentários</span>
+                    </div>
+                    <div class="area-comentarios">
+                        <div class="caixa-comentario">
+                            <input type="text" id="nome-${p.id}" placeholder="Seu nome" class="input-nome">
+                            <textarea id="coment-${p.id}" placeholder="Escreva um comentário..." class="txt-comentario"></textarea>
+                            <button onclick="comentar('${p.id}')" class="btn-comentar">Enviar Comentário ✅</button>
+                        </div>
+                        <div class="lista-comentarios" id="coments-${p.id}">
+                            ${comentarios.filter(c=>c.alvoId===p.id && c.tipo==='projeto').map(c=>`
+                                <div class="comentario">
+                                    <strong>${c.nome}</strong>
+                                    <p>${c.texto}</p>
+                                    <small>${c.data}</small>
+                                </div>`).join('')}
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function aplicarFiltros() { carregarProjetos(); }
+
+        function curtir(id) {
+            const curtidas = JSON.parse(localStorage.getItem('curtidas') || '{}');
+            curtidas[id] = (curtidas[id] || 0) + 1;
+            localStorage.setItem('curtidas', JSON.stringify(curtidas));
+            carregarProjetos();
+        }
+
+        function comentar(id) {
+            const nome = document.getElementById(`nome-${id}`).value.trim();
+            const texto = document.getElementById(`coment-${id}`).value.trim();
+            if (!nome || !texto) { alert('❌ Preencha seu nome e o comentário!'); return; }
+            const comentarios = JSON.parse(localStorage.getItem('comentarios') || '[]');
+            comentarios.push({
+                id: Date.now(),
+                alvoId: id,
+                tipo: 'projeto',
+                nome: nome,
+                texto: texto,
+                data: new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})
+            });
+            localStorage.setItem('comentarios', JSON.stringify(comentarios));
+            carregarProjetos();
+        }
+
+        carregarProjetos();
+    </script>
+
+</body>
+</html>

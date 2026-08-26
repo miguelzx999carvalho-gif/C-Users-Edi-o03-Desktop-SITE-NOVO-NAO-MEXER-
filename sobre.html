@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sobre | SENAC — Miguel Carvalho</title>
+    <link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+
+    <header>
+        <nav class="menu">
+            <a href="index.html">🏠 Início</a>
+            <a href="projetos.html">📂 Projetos</a>
+            <a href="avisos.html">📢 Avisos</a>
+            <a href="sobre.html" class="link-ativo">👤 Sobre</a>
+            <a href="#" onclick="abrirLogin(); return false;" class="botao-adm">🔐 Admin</a>
+        </nav>
+    </header>
+
+    <main>
+        <div class="card sobre-card">
+            <h1>👤 Sobre</h1>
+            <div class="conteudo-sobre">
+                <p><strong>Olá! 👋</strong> Seja bem-vindo ao meu espaço de apresentação de trabalhos e projetos do curso do SENAC!</p>
+                <p>📧 <strong>Contato:</strong> miguelzx999carvalho@gmail.com</p>
+                <p>🎓 Estudante dedicado, sempre buscando aprender e compartilhar conhecimento.</p>
+                <p>💡 Aqui você encontra meus projetos feitos no Canva, vídeos, apresentações, trabalhos escritos e muito mais!</p>
+                <p>💬 Sinta-se à vontade para deixar comentários nos trabalhos!</p>
+            </div>
+        </div>
+    </main>
+
+    <div id="loginTela" class="tela-login">
+        <div class="caixa-login">
+            <button class="fechar" onclick="fecharLogin()">&times;</button>
+            <h3>🔐 Acesso Administrativo</h3>
+            <input type="email" id="email" placeholder="📧 Seu e-mail">
+            <input type="password" id="senha" placeholder="🔑 Senha">
+            <button onclick="entrar()" class="botao-entrar">Entrar</button>
+        </div>
+    </div>
+
+    <script>
+        const EMAIL_DONO = "miguelzx999carvalho@gmail.com";
+        const SENHA_DONO = "1029384756SENAC";
+
+        function abrirLogin() { document.getElementById('loginTela').style.display = 'flex'; }
+        function fecharLogin() { document.getElementById('loginTela').style.display = 'none'; }
+        function entrar() {
+            const e = document.getElementById('email').value;
+            const s = document.getElementById('senha').value;
+            if (e === EMAIL_DONO && s === SENHA_DONO) {
+                localStorage.setItem('logado', 'SIM');
+                alert('✅ Bem-vindo, Miguel!');
+                fecharLogin();
+                window.location.href = 'painel.html';
+            } else { alert('❌ Dados incorretos!'); }
+        }
+    </script>
+
+</body>
+</html>

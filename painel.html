@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Administrativo — Miguel Carvalho</title>
+    <link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+
+    <header>
+        <nav class="menu">
+            <a href="index.html">← ↩️ Voltar ao Site</a>
+            <a href="#" onclick="sair()" style="margin-left:auto;">🚪 Sair</a>
+        </nav>
+    </header>
+
+    <main>
+        <h1>⚙️ Painel Administrativo</h1>
+        <p class="subtitulo">🔒 Acesso restrito ao dono — apenas você publica!</p>
+
+        <div class="card">
+            <h2>📤 Publicar Novo Projeto</h2>
+            <input type="text" id="proj-titulo" placeholder="📝 Título do trabalho">
+            <select id="proj-secao">
+                <option value="🎨 Canva">🎨 Projeto do Canva</option>
+                <option value="🎬 Vídeos">🎬 Vídeo / Apresentação</option>
+                <option value="📄 Trabalhos Escritos">📄 Trabalho Escrito</option>
+                <option value="💻 Projetos de Programação">💻 Programação</option>
+                <option value="📊 Apresentações">📊 Apresentação</option>
+                <option value="📸 Fotos e Imagens">📸 Foto / Imagem</option>
+            </select>
+            <input type="text" id="proj-link" placeholder="🔗 Link (Canva, YouTube, arquivo...)">
+            <textarea id="proj-desc" rows="3" placeholder="📋 Descrição (opcional)"></textarea>
+            <button onclick="publicarProjeto()" class="botao">✅ Publicar Projeto</button>
+        </div>
+
+        <div class="card">
+            <h2>📢 Publicar Novo Aviso</h2>
+            <input type="text" id="aviso-titulo" placeholder="📝 Título do aviso">
+            <textarea id="aviso-texto" rows="5" placeholder="✍️ Escreva o aviso aqui..."></textarea>
+            <button onclick="publicarAviso()" class="botao">✅ Publicar Aviso</button>
+        </div>
+
+        <div class="card">
+            <h2>🗑️ Gerenciar e Excluir</h2>
+            <h3>📂 Projetos Publicados:</h3>
+            <div id="lista-proj"></div>
+            <h3 style="margin-top:2rem;">📢 Avisos Publicados:</h3>
+            <div id="lista-avisos"></div>
+            <h3 style="margin-top:2rem;">💬 Comentários Recebidos:</h3>
+            <div id="lista-comentarios"></div>
+        </div>
+    </main>
+
+    <script>
+        const EMAIL_DONO = "miguelzx999carvalho@gmail.com";
+        const SENHA_DONO = "1029384756SENAC";
+
+        function verificarAcesso() {
+            if (localStorage.getItem('logado') !== 'SIM') {
+                alert('❌ Acesso negado! Faça login primeiro.');
+                window.location.href = 'index.html';
+            }
+        }
+        verificarAcesso();
+
+        function sair() {
+            localStorage.removeItem('logado');
+            window.location.href = 'index.html';
+        }
+
+        function publicarProjeto() {
+            const titulo = document.getElementById('proj-titulo').value.trim();
+            const secao = document.getElementById('proj-secao').value;
+            const link = document.getElementById('proj-link').value.trim();
+            const descricao = document.getElementById('proj-desc').value.trim();
+
+            if (!titulo || !link) { alert('❌ Preencha o título e o link!'); return; }
+
+            const projetos = JSON.parse(localStorage.getItem('projetos') || '[]');
+            projetos.push({
+                id: Date.now(),
+                titulo, secao, link, descricao,
+                data: new Date().toLocaleDateString('pt-BR'),
+                dataComp: Date.now()
+            });
+            localStorage.setItem('projetos', JSON.stringify(projetos));
+
+            alert('✅ Projeto publicado com sucesso!');
+            document.getElementById('proj-titulo').value = '';
+            document.getElementById('proj-link').value = '';
+            document.getElementById('proj-desc').value = '';
+            atualizarListas();
+        }
+
+        function publicarAviso() {
+            const titulo = document.getElementById('aviso-titulo').value.trim();
+            const texto = document.getElementById('aviso-texto').value.trim();
+
+            if (!titulo || !texto) { alert('❌ Preencha o título e o texto!'); return; }
+
+            const avisos = JSON.parse(localStorage.getItem('avisos') || '[]');
+            avisos.push({
+                id: Date.now(),
+                titulo, texto,
+                data: new Date().toLocaleDateString('pt-BR')
+            });
+            localStorage.setItem('avisos', JSON.stringify(avisos));
+
+            alert('✅ Aviso publicado com sucesso!');
+            document.getElementById('aviso-titulo').value = '';
+            document.getElementById('aviso-texto').value = '';
+            atualizarListas();
+        }
+
+        function excluirProjeto(id) {
+            if (confirm('Tem certeza? Isso apaga também os comentários!')) {
+                let projetos = JSON.parse(localStorage.getItem('projetos') || '[]');
+                projetos = projetos.filter(p => p.id !== id);
+                localStorage.setItem('projetos', JSON.stringify(projetos));
+
+                let comentarios = JSON.parse(localStorage.getItem('comentarios') || '[]');
+                comentarios = comentarios.filter(c => !(c.alvoId == id && c.tipo === 'projeto'));
+                localStorage.setItem('comentarios', JSON.stringify(comentarios));
+
+                atualizarListas();
+            }
+        }
+
+        function excluirAviso(id) {
+            if (confirm('Tem certeza? Isso apaga também os comentários!')) {
+                let avisos = JSON.parse(localStorage.getItem('avisos') || '[]');
+                avisos = avisos.filter(a => a.id !== id);
+                localStorage.setItem('avisos', JSON.stringify(avisos));
+
+                let comentarios = JSON.parse(localStorage.getItem('comentarios') || '[]');
+                comentarios = comentarios.filter(c => !(c.alvoId == id && c.tipo === 'aviso'));
+                localStorage.setItem('comentarios', JSON.stringify(comentarios));
+
+                atualizarListas();
+            }
+        }
+
+        function excluirComentario(id) {
+            if (confirm('Excluir este comentário?')) {
+                let comentarios = JSON.parse(localStorage.getItem('comentarios') || '[]');
+                comentarios = comentarios.filter(c => c.id !== id);
+                localStorage.setItem('comentarios', JSON.stringify(comentarios));
+                atualizarListas();
+            }
+        }
+
+        function atualizarListas() {
+            const projetos = JSON.parse(localStorage.getItem('projetos') || '[]');
+            const avisos = JSON.parse(localStorage.getItem('avisos') || '[]');
+            const comentarios = JSON.parse(localStorage.getItem('comentarios') || '[]');
+
+            document.getElementById('lista-proj').innerHTML = projetos.length === 0
+                ? '<p class="vazio">Nenhum projeto.</p>'
+                : projetos.map(p => `
+                    <div class="item-lista">
+                        ${p.secao} — ${p.titulo} (${p.data})
+                        <button onclick="excluirProjeto(${p.id})" class="btn-excluir">🗑️</button>
+                    </div>`).join('');
+
+            document.getElementById('lista-avisos').innerHTML = avisos.length === 0
+                ? '<p class="vazio">Nenhum aviso.</p>'
+                : avisos.map(a => `
+                    <div class="item-lista">
+                        📢 ${a.titulo} (${a.data})
+                        <button onclick="excluirAviso(${a.id})" class="btn-excluir">🗑️</button>
+                    </div>`).join('');
+
+            document.getElementById('lista-comentarios').innerHTML = comentarios.length === 0
+                ? '<p class="vazio">Nenhum comentário recebido.</p>'
+                : comentarios.map(c => `
+                    <div class="item-lista">
+                        💬 ${c.nome}: ${c.texto.substring(0,40)}... — ${c.data}
+                        <button onclick="excluirComentario(${c.id})" class="btn-excluir">🗑️</button>
+                    </div>`).join('');
+        }
+        atualizarListas();
+    </script>
+
+</body>
+</html>
