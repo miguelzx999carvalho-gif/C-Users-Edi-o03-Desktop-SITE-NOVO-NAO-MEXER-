@@ -181,6 +181,93 @@
                     </div>`).join('');
         }
         atualizarListas();
+<!-- 🎥 ÁREA DE UPLOAD DE VÍDEOS E ARQUIVOS -->
+<div class="card">
+    <h2>📤 Enviar Vídeos e Arquivos</h2>
+    <p style="color: var(--texto-claro); margin-bottom: 1rem;">Escolha o arquivo → clique em enviar → copie o link gerado e use nos projetos!</p>
+    
+    <input type="file" id="arquivoUpload" accept="video/*,.pdf,.zip,.rar,.jpg,.png,.gif" style="margin-bottom: 1rem;">
+    <button onclick="enviarArquivo()" class="botao">📤 Enviar Arquivo</button>
+    
+    <div id="resultadoUpload" style="margin-top: 1.5rem; padding: 1rem; background: rgba(0,102,204,0.05); border-radius: 12px; display: none;">
+        <p>✅ Arquivo pronto! Copie o link abaixo:</p>
+        <input type="text" id="linkGerado" readonly style="width: 100%; margin: 0.5rem 0;" onclick="this.select()">
+        <button onclick="copiarLink()" class="botao" style="padding: 0.5rem 1rem; font-size: 0.9rem;">📋 Copiar Link</button>
+    </div>
+    
+    <h3 style="margin-top: 2rem;">📂 Arquivos Enviados:</h3>
+    <div id="lista-arquivos"></div>
+</div>
+
+<script>
+// 🎥 SISTEMA DE UPLOAD DE VÍDEOS E ARQUIVOS
+function enviarArquivo() {
+    const input = document.getElementById('arquivoUpload');
+    const arquivo = input.files[0];
+    if (!arquivo) { alert('❌ Escolha um arquivo primeiro!'); return; }
+
+    const leitor = new FileReader();
+    leitor.onload = function(e) {
+        const dadosArquivo = {
+            nome: arquivo.name,
+            tipo: arquivo.type,
+            tamanho: arquivo.size,
+            data: new Date().toLocaleDateString('pt-BR'),
+            url: e.target.result
+        };
+
+        // Salva na lista de arquivos
+        const arquivosSalvos = JSON.parse(localStorage.getItem('arquivos') || '[]');
+        arquivosSalvos.unshift(dadosArquivo);
+        localStorage.setItem('arquivos', JSON.stringify(arquivosSalvos));
+
+        // Mostra o link
+        document.getElementById('linkGerado').value = dadosArquivo.url;
+        document.getElementById('resultadoUpload').style.display = 'block';
+        atualizarListaArquivos();
+        alert('✅ Arquivo enviado com sucesso! Copie o link acima!');
+    };
+    leitor.readAsDataURL(arquivo);
+}
+
+function copiarLink() {
+    const link = document.getElementById('linkGerado');
+    link.select();
+    document.execCommand('copy');
+    alert('✅ Link copiado! Agora é só colar no projeto!');
+}
+
+function atualizarListaArquivos() {
+    const arquivos = JSON.parse(localStorage.getItem('arquivos') || '[]');
+    const lista = document.getElementById('lista-arquivos');
+    
+    if (arquivos.length === 0) {
+        lista.innerHTML = '<p class="vazio">Nenhum arquivo enviado ainda.</p>';
+        return;
+    }
+
+    lista.innerHTML = arquivos.map((arq, indice) => {
+        const icone = arq.tipo.startsWith('video/') ? '🎬' : 
+                      arq.tipo.startsWith('image/') ? '🖼️' : '📄';
+        return `
+        <div class="item-lista">
+            ${icone} ${arq.nome} (${(arq.tamanho/1024/1024).toFixed(2)} MB)
+            <button onclick="usarArquivo(${indice})" class="btn-comentar" style="padding: 0.3rem 0.7rem; font-size: 0.85rem;">Usar Link</button>
+        </div>`;
+    }).join('');
+}
+
+function usarArquivo(indice) {
+    const arquivos = JSON.parse(localStorage.getItem('arquivos') || '[]');
+    const link = arquivos[indice].url;
+    navigator.clipboard.writeText(link);
+    alert('✅ Link copiado! Agora cole no campo "Link" do seu projeto!');
+}
+
+// Carrega a lista ao abrir a página
+atualizarListaArquivos();
+</script>
+
     </script>
 
 </body>
